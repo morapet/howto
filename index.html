@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modern Trading, Risk &amp; Clearing</title>
+  <style>
+    /* ── Reset & base ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #0a0e1a;
+      --surface:   #111827;
+      --border:    #1f2d45;
+      --accent:    #00d4ff;
+      --green:     #00e676;
+      --red:       #ff5252;
+      --yellow:    #ffd740;
+      --purple:    #b388ff;
+      --orange:    #ff9800;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --font:      'Segoe UI', system-ui, sans-serif;
+    }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      overflow: hidden;
+    }
+
+    /* ── Slide deck ─────────────────────────────────────────────── */
+    #deck {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 48px 64px 32px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .45s ease;
+    }
+    .slide.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* ── Navigation ─────────────────────────────────────────────── */
+    #nav {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+    }
+    #nav button {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 22px;
+      border-radius: 24px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background .2s, border-color .2s;
+    }
+    #nav button:hover { background: var(--border); border-color: var(--accent); }
+    #nav button:disabled { opacity: .3; cursor: default; }
+    #counter {
+      font-size: 13px;
+      color: var(--muted);
+      min-width: 64px;
+      text-align: center;
+    }
+    /* slide dots */
+    #dots {
+      position: fixed;
+      top: 18px;
+      right: 32px;
+      display: flex;
+      gap: 7px;
+      z-index: 100;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      cursor: pointer;
+      transition: background .2s, transform .2s;
+    }
+    .dot.active { background: var(--accent); transform: scale(1.4); }
+
+    /* ── Typography helpers ─────────────────────────────────────── */
+    .slide-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+      letter-spacing: -.02em;
+    }
+    .slide-subtitle {
+      font-size: 1rem;
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+    h3 { font-size: 1rem; font-weight: 600; margin-bottom: 8px; }
+    p, li { font-size: .9rem; line-height: 1.65; color: var(--text); }
+    ul { padding-left: 18px; }
+    li { margin-bottom: 4px; }
+    .tag {
+      display: inline-block;
+      background: #1f2d45;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: .75rem;
+      color: var(--accent);
+      margin: 2px;
+    }
+
+    /* ── Card grid ──────────────────────────────────────────────── */
+    .grid {
+      display: grid;
+      gap: 16px;
+      flex: 1;
+    }
+    .grid-2 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .card-icon { font-size: 1.6rem; }
+    .card h3 { color: var(--accent); }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: .75rem;
+      font-weight: 600;
+    }
+    .badge-green  { background: #003322; color: var(--green); }
+    .badge-red    { background: #2d0808; color: var(--red); }
+    .badge-yellow { background: #2d2200; color: var(--yellow); }
+    .badge-blue   { background: #002233; color: var(--accent); }
+    .badge-purple { background: #1a1033; color: var(--purple); }
+
+    /* ── Flow arrow ─────────────────────────────────────────────── */
+    .flow {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+    }
+    .flow-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      text-align: center;
+      min-width: 100px;
+      flex-shrink: 0;
+    }
+    .flow-box .ico { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+    .flow-box span { font-size: .78rem; color: var(--text); }
+    .flow-arrow {
+      color: var(--accent);
+      font-size: 1.2rem;
+      flex-shrink: 0;
+      padding: 0 6px;
+    }
+    .flow-box.highlight { border-color: var(--accent); box-shadow: 0 0 12px #00d4ff44; }
+
+    /* ── Order book ─────────────────────────────────────────────── */
+    .book {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .book-side { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .book-header {
+      padding: 8px 14px;
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .05em;
+    }
+    .book-header.bids { background: #003322; color: var(--green); }
+    .book-header.asks { background: #2d0808; color: var(--red); }
+    .book-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      padding: 5px 14px;
+      font-size: .8rem;
+      font-variant-numeric: tabular-nums;
+      border-bottom: 1px solid #0f1926;
+      position: relative;
+    }
+    .bar {
+      position: absolute;
+      top: 0; bottom: 0;
+      opacity: .12;
+    }
+    .bar-bid { background: var(--green); left: 0; }
+    .bar-ask { background: var(--red); right: 0; }
+    .price-green { color: var(--green); }
+    .price-red   { color: var(--red); }
+    .col-r { text-align: right; }
+
+    /* ── Risk gauge ─────────────────────────────────────────────── */
+    .gauge-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .gauge-item { display: flex; flex-direction: column; gap: 4px; }
+    .gauge-label { display: flex; justify-content: space-between; font-size: .8rem; }
+    .gauge-track {
+      height: 10px;
+      background: #1a2333;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .gauge-fill {
+      height: 100%;
+      border-radius: 5px;
+      transition: width 1s ease;
+    }
+
+    /* ── CCP diagram ─────────────────────────────────────────────── */
+    .ccp-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      grid-template-rows: auto auto auto;
+      gap: 12px;
+      align-items: center;
+      flex: 1;
+    }
+    .ccp-center {
+      grid-column: 2;
+      grid-row: 1 / 4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ccp-node {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      text-align: center;
+      font-size: .82rem;
+    }
+    .ccp-hub {
+      background: linear-gradient(135deg,#00334466,#002244aa);
+      border: 2px solid var(--accent);
+      box-shadow: 0 0 24px #00d4ff44;
+      border-radius: 50%;
+      width: 120px; height: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: .85rem;
+      color: var(--accent);
+    }
+    .arrow-h { text-align: center; font-size: 1.2rem; color: var(--accent); }
+    .arrow-v { text-align: center; font-size: 1.2rem; color: var(--accent); }
+
+    /* ── Margin table ────────────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .82rem;
+    }
+    th {
+      background: #111d2e;
+      color: var(--accent);
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid var(--border);
+    }
+    td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    tr:hover td { background: #0f1926; }
+
+    /* ── Settlement timeline ─────────────────────────────────────── */
+    .timeline {
+      position: relative;
+      padding-left: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 12px; top: 8px; bottom: 8px;
+      width: 2px;
+      background: var(--border);
+    }
+    .tl-item {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .tl-dot {
+      position: absolute;
+      left: -26px; top: 6px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      border: 2px solid var(--bg);
+    }
+    .tl-day { font-size: .75rem; font-weight: 700; color: var(--muted); letter-spacing: .05em; }
+    .tl-title { font-size: .88rem; font-weight: 600; color: var(--text); }
+    .tl-desc { font-size: .8rem; color: var(--muted); }
+
+    /* ── Tech stack grid ─────────────────────────────────────────── */
+    .tech-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .tech-chip {
+      background: #111d2e;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: .78rem;
+      color: var(--accent);
+    }
+
+    /* ── Title slide ─────────────────────────────────────────────── */
+    #s0 {
+      background: radial-gradient(ellipse at 20% 50%, #002244 0%, var(--bg) 60%);
+      justify-content: center;
+      align-items: flex-start;
+    }
+    #s0 .big-title {
+      font-size: 3.2rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -.04em;
+      background: linear-gradient(135deg, var(--accent), #7c5cfc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    #s0 .tagline {
+      font-size: 1.1rem;
+      color: var(--muted);
+      margin-top: 16px;
+      max-width: 540px;
+    }
+    .topics-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 32px;
+    }
+    .topic-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 7px 18px;
+      font-size: .85rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── Scrollable areas ────────────────────────────────────────── */
+    .scroll { overflow-y: auto; flex: 1; }
+
+    /* ── Animated pulse ──────────────────────────────────────────── */
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .pulse { animation: pulse 2s ease infinite; }
+    @keyframes flow-move { 0%{stroke-dashoffset:40} 100%{stroke-dashoffset:0} }
+
+    /* ── Responsive tweaks ───────────────────────────────────────── */
+    @media (max-width:900px) {
+      .slide { padding: 32px 24px 24px; }
+      .grid-3 { grid-template-columns: 1fr 1fr; }
+      .grid-4 { grid-template-columns: 1fr 1fr; }
+      #s0 .big-title { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="deck">
+
+  <!-- ── 0. Title ────────────────────────────────────────────── -->
+  <section class="slide active" id="s0">
+    <div class="big-title">Modern Trading,<br>Risk &amp; Clearing</div>
+    <p class="tagline">
+      A visual journey through the full lifecycle of an electronic trade —
+      from order entry to final settlement.
+    </p>
+    <div class="topics-list">
+      <div class="topic-pill">📈 Order Flow</div>
+      <div class="topic-pill">⚡ Matching Engine</div>
+      <div class="topic-pill">🛡️ Pre-trade Risk</div>
+      <div class="topic-pill">📊 Real-time Risk</div>
+      <div class="topic-pill">🏛️ Clearing &amp; CCP</div>
+      <div class="topic-pill">💰 Margin</div>
+      <div class="topic-pill">✅ Settlement</div>
+      <div class="topic-pill">💻 Technology</div>
+    </div>
+    <p style="position:absolute;bottom:72px;font-size:.8rem;color:var(--muted)">
+      Use <strong>← →</strong> arrow keys or the buttons below to navigate
+    </p>
+  </section>
+
+  <!-- ── 1. Trading Ecosystem ───────────────────────────────── -->
+  <section class="slide" id="s1">
+    <div class="slide-title">The Trading Ecosystem</div>
+    <div class="slide-subtitle">Key participants and their roles in modern financial markets</div>
+    <div class="grid grid-3" style="flex:1">
+
+      <div class="card">
+        <div class="card-icon">🏦</div>
+        <h3>Sell-Side</h3>
+        <ul>
+          <li>Investment banks &amp; brokers</li>
+          <li>Market makers &amp; liquidity providers</li>
+          <li>Prime brokerage services</li>
+          <li>Proprietary trading desks</li>
+        </ul>
+        <div style="margin-top:auto">
+          <span class="tag">Liquidity</span>
+          <span class="tag">Execution</span>
+          <span class="tag">Research</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">🏢</div>
+        <h3>Buy-Side</h3>
+        <ul>
+          <li>Asset managers &amp; hedge funds</li>
+          <li>Pension &amp; insurance funds</li>
+          <li>ETF sponsors</li>
+          <li>High-frequency traders (HFT)</li>
+        </ul>
+        <div style="margin-top:auto">
+          <span class="tag">Alpha</span>
+          <span class="tag">Portfolio Mgmt</span>
+          <span class="tag">HFT</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">🏛️</div>
+        <h3>Infrastructure</h3>
+        <ul>
+          <li>Exchanges &amp; MTFs / ECNs</li>
+          <li>Central Counterparties (CCP)</li>
+          <li>Central Securities Depositories</li>
+          <li>Regulators (SEC, FCA, ESMA…)</li>
+        </ul>
+        <div style="margin-top:auto">
+          <span class="tag">Venue</span>
+          <span class="tag">Clearing</span>
+          <span class="tag">Custody</span>
+        </div>
+      </div>
+
+      <div class="card" style="grid-column:1/-1">
+        <h3>📡 Market Data &amp; Connectivity</h3>
+        <div class="flow" style="justify-content:center;gap:8px;flex-wrap:wrap;margin-top:4px">
+          <div class="flow-box"><span class="ico">📰</span><span>News Feed</span></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box highlight"><span class="ico">📡</span><span>Market Data<br>Feed</span></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box"><span class="ico">🖥️</span><span>OMS / EMS</span></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box"><span class="ico">🌐</span><span>Exchange<br>Gateway</span></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box"><span class="ico">⚡</span><span>Matching<br>Engine</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 2. Order Types & Order Book ───────────────────────── -->
+  <section class="slide" id="s2">
+    <div class="slide-title">Order Types &amp; The Order Book</div>
+    <div class="slide-subtitle">How orders enter the market and stack up in the central limit order book (CLOB)</div>
+
+    <div class="grid grid-2" style="flex:1">
+      <!-- Left: order types -->
+      <div class="card scroll">
+        <h3>🗂️ Common Order Types</h3>
+        <table style="margin-top:8px">
+          <tr><th>Type</th><th>Description</th><th>Guarantee</th></tr>
+          <tr><td><strong>Market</strong></td><td>Execute immediately at best available price</td><td><span class="badge badge-green">Fill</span></td></tr>
+          <tr><td><strong>Limit</strong></td><td>Execute at specified price or better</td><td><span class="badge badge-blue">Price</span></td></tr>
+          <tr><td><strong>Stop</strong></td><td>Triggers market order at stop price</td><td><span class="badge badge-yellow">Trigger</span></td></tr>
+          <tr><td><strong>Stop-Limit</strong></td><td>Triggers limit order at stop price</td><td><span class="badge badge-yellow">Trigger+Price</span></td></tr>
+          <tr><td><strong>IOC</strong></td><td>Immediate-or-Cancel — fill or cancel partial</td><td><span class="badge badge-blue">Partial</span></td></tr>
+          <tr><td><strong>FOK</strong></td><td>Fill-or-Kill — must fill 100% or cancel</td><td><span class="badge badge-red">All-or-None</span></td></tr>
+          <tr><td><strong>Iceberg</strong></td><td>Large order with hidden reserve quantity</td><td><span class="badge badge-purple">Stealth</span></td></tr>
+          <tr><td><strong>TWAP/VWAP</strong></td><td>Algorithmic slice over time or volume</td><td><span class="badge badge-purple">Algo</span></td></tr>
+        </table>
+      </div>
+
+      <!-- Right: live-looking order book -->
+      <div class="card">
+        <h3>📖 Live Order Book — AAPL</h3>
+        <p style="font-size:.78rem;color:var(--muted);margin-bottom:10px">Top 5 levels · Quantity in 100s</p>
+        <div class="book">
+          <div class="book-side">
+            <div class="book-header bids">BIDS (BUY)</div>
+            <div class="book-row"><div class="bar bar-bid" style="width:90%"></div><span class="price-green">189.42</span><span>1 200</span><span class="col-r">1 200</span></div>
+            <div class="book-row"><div class="bar bar-bid" style="width:72%"></div><span class="price-green">189.40</span><span>850</span><span class="col-r">2 050</span></div>
+            <div class="book-row"><div class="bar bar-bid" style="width:55%"></div><span class="price-green">189.38</span><span>640</span><span class="col-r">2 690</span></div>
+            <div class="book-row"><div class="bar bar-bid" style="width:38%"></div><span class="price-green">189.35</span><span>450</span><span class="col-r">3 140</span></div>
+            <div class="book-row"><div class="bar bar-bid" style="width:20%"></div><span class="price-green">189.30</span><span>230</span><span class="col-r">3 370</span></div>
+          </div>
+          <div class="book-side">
+            <div class="book-header asks">ASKS (SELL)</div>
+            <div class="book-row"><div class="bar bar-ask" style="width:80%"></div><span class="price-red">189.45</span><span>960</span><span class="col-r">960</span></div>
+            <div class="book-row"><div class="bar bar-ask" style="width:65%"></div><span class="price-red">189.47</span><span>780</span><span class="col-r">1 740</span></div>
+            <div class="book-row"><div class="bar bar-ask" style="width:50%"></div><span class="price-red">189.50</span><span>600</span><span class="col-r">2 340</span></div>
+            <div class="book-row"><div class="bar bar-ask" style="width:30%"></div><span class="price-red">189.55</span><span>360</span><span class="col-r">2 700</span></div>
+            <div class="book-row"><div class="bar bar-ask" style="width:15%"></div><span class="price-red">189.60</span><span>180</span><span class="col-r">2 880</span></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:24px;margin-top:10px;font-size:.8rem">
+          <span>Bid: <strong class="price-green">189.42</strong></span>
+          <span>Spread: <strong style="color:var(--yellow)">$0.03</strong></span>
+          <span>Ask: <strong class="price-red">189.45</strong></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 3. Matching Engine ─────────────────────────────────── -->
+  <section class="slide" id="s3">
+    <div class="slide-title">Matching Engine &amp; Trade Execution</div>
+    <div class="slide-subtitle">Sub-microsecond matching at the heart of every exchange</div>
+
+    <div class="grid grid-2" style="flex:1">
+      <div class="card">
+        <h3>⚡ Price-Time Priority (FIFO)</h3>
+        <p style="margin-bottom:12px;color:var(--muted);font-size:.82rem">
+          The most common matching algorithm: best price wins; ties broken by arrival time.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#0f1926;border-radius:8px;border-left:3px solid var(--green)">
+            <span>🟢</span><span style="font-size:.82rem"><strong>Buy limit 189.45 · 500 shares · 09:30:00.000 100</strong></span>
+            <span class="badge badge-green" style="margin-left:auto">MATCHED</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#0f1926;border-radius:8px;border-left:3px solid var(--red)">
+            <span>🔴</span><span style="font-size:.82rem">Sell limit 189.45 · 500 shares · 09:30:00.000 200</span>
+            <span class="badge badge-green" style="margin-left:auto">MATCHED</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#0f1926;border-radius:8px;border-left:3px solid var(--yellow)">
+            <span>⚡</span><span style="font-size:.82rem">Trade: 500 @ $189.45 — Execution report sent</span>
+            <span class="badge badge-yellow" style="margin-left:auto">FILL</span>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <h3 style="margin-bottom:6px">Other Matching Algorithms</h3>
+          <div class="tech-row">
+            <span class="tech-chip">Pro-Rata</span>
+            <span class="tech-chip">FIFO+LMM</span>
+            <span class="tech-chip">Allocation</span>
+            <span class="tech-chip">Preference</span>
+            <span class="tech-chip">Auctions (opening/closing)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🚀 Execution Flow</h3>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+
+          <div class="flow" style="flex-direction:column;align-items:flex-start;gap:6px">
+            <div style="display:flex;align-items:center;gap:10px;width:100%">
+              <div class="flow-box" style="min-width:unset;flex:1;text-align:left;padding:10px 14px">
+                <span style="font-size:.8rem;color:var(--muted)">① ORDER ENTRY</span><br>
+                <span style="font-size:.85rem">Client sends FIX/OUCH order via gateway</span>
+              </div>
+            </div>
+            <div style="padding-left:24px;color:var(--accent);font-size:1rem">↓</div>
+            <div style="display:flex;align-items:center;gap:10px;width:100%">
+              <div class="flow-box highlight" style="min-width:unset;flex:1;text-align:left;padding:10px 14px">
+                <span style="font-size:.8rem;color:var(--accent)">② PRE-TRADE RISK</span><br>
+                <span style="font-size:.85rem">Credit, position &amp; market-abuse checks</span>
+              </div>
+            </div>
+            <div style="padding-left:24px;color:var(--accent);font-size:1rem">↓</div>
+            <div style="display:flex;align-items:center;gap:10px;width:100%">
+              <div class="flow-box" style="min-width:unset;flex:1;text-align:left;padding:10px 14px">
+                <span style="font-size:.8rem;color:var(--muted)">③ MATCHING ENGINE</span><br>
+                <span style="font-size:.85rem">Order queued &amp; matched — latency &lt;1 µs</span>
+              </div>
+            </div>
+            <div style="padding-left:24px;color:var(--accent);font-size:1rem">↓</div>
+            <div style="display:flex;align-items:center;gap:10px;width:100%">
+              <div class="flow-box" style="min-width:unset;flex:1;text-align:left;padding:10px 14px">
+                <span style="font-size:.8rem;color:var(--muted)">④ EXECUTION REPORT</span><br>
+                <span style="font-size:.85rem">FIX ExecutionReport (39=2) back to client</span>
+              </div>
+            </div>
+            <div style="padding-left:24px;color:var(--accent);font-size:1rem">↓</div>
+            <div style="display:flex;align-items:center;gap:10px;width:100%">
+              <div class="flow-box" style="min-width:unset;flex:1;text-align:left;padding:10px 14px">
+                <span style="font-size:.8rem;color:var(--muted)">⑤ POST-TRADE</span><br>
+                <span style="font-size:.85rem">Clearing, risk update, allocation &amp; reporting</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 4. Pre-Trade Risk ───────────────────────────────────── -->
+  <section class="slide" id="s4">
+    <div class="slide-title">Pre-Trade Risk Checks</div>
+    <div class="slide-subtitle">Hard real-time gates that block dangerous orders before they reach the exchange</div>
+
+    <div class="grid grid-2" style="flex:1">
+      <div class="card">
+        <h3>🔒 Credit &amp; Limit Checks</h3>
+        <table>
+          <tr><th>Check</th><th>Threshold (example)</th><th>Action if breached</th></tr>
+          <tr><td>Gross Exposure</td><td>$50 M per client</td><td><span class="badge badge-red">REJECT</span></td></tr>
+          <tr><td>Net Open Position</td><td>±10 000 contracts</td><td><span class="badge badge-red">REJECT</span></td></tr>
+          <tr><td>Single Order Notional</td><td>$5 M max</td><td><span class="badge badge-red">REJECT</span></td></tr>
+          <tr><td>Order Rate (per sec)</td><td>1 000 msg/s</td><td><span class="badge badge-yellow">THROTTLE</span></td></tr>
+          <tr><td>Fat-finger (price %)</td><td>±5% from mid</td><td><span class="badge badge-red">REJECT</span></td></tr>
+          <tr><td>Fat-finger (qty)</td><td>10× ADV</td><td><span class="badge badge-red">REJECT</span></td></tr>
+          <tr><td>Buying Power</td><td>Cash + margin</td><td><span class="badge badge-red">REJECT</span></td></tr>
+          <tr><td>Duplicate Order</td><td>Same price+qty+time</td><td><span class="badge badge-yellow">WARN</span></td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>🛡️ Market-Abuse &amp; Regulatory Checks</h3>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+          <div style="padding:10px 14px;background:#0f1926;border-radius:8px;border-left:3px solid var(--yellow)">
+            <strong style="font-size:.85rem">Wash-Trade Detection</strong>
+            <p style="font-size:.8rem;color:var(--muted);margin-top:4px">Cross-checks buy &amp; sell orders from the same or related accounts</p>
+          </div>
+          <div style="padding:10px 14px;background:#0f1926;border-radius:8px;border-left:3px solid var(--yellow)">
+            <strong style="font-size:.85rem">Layering / Spoofing</strong>
+            <p style="font-size:.8rem;color:var(--muted);margin-top:4px">Pattern detection for orders placed &amp; cancelled rapidly to move the market</p>
+          </div>
+          <div style="padding:10px 14px;background:#0f1926;border-radius:8px;border-left:3px solid var(--purple)">
+            <strong style="font-size:.85rem">MiFID II / Dodd-Frank Compliance</strong>
+            <p style="font-size:.8rem;color:var(--muted);margin-top:4px">Mandatory pre- and post-trade transparency &amp; reporting obligations</p>
+          </div>
+          <div style="padding:10px 14px;background:#0f1926;border-radius:8px;border-left:3px solid var(--accent)">
+            <strong style="font-size:.85rem">Short-Sell Checks</strong>
+            <p style="font-size:.8rem;color:var(--muted);margin-top:4px">Ensures borrows are in place; enforces short-selling bans during volatility</p>
+          </div>
+          <div style="padding:10px 14px;background:#0f1926;border-radius:8px;border-left:3px solid var(--green)">
+            <strong style="font-size:.85rem">Circuit Breakers</strong>
+            <p style="font-size:.8rem;color:var(--muted);margin-top:4px">Exchange &amp; firm-level halts triggered by price moves beyond ±X% in Y minutes</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 5. Real-Time Risk ───────────────────────────────────── -->
+  <section class="slide" id="s5">
+    <div class="slide-title">Real-Time Risk Monitoring</div>
+    <div class="slide-subtitle">Continuous portfolio risk measurement while the market is open</div>
+
+    <div class="grid grid-2" style="flex:1">
+      <!-- Gauge panel -->
+      <div class="card">
+        <h3>📊 Portfolio Risk Dashboard (live)</h3>
+        <div class="gauge-row" style="margin-top:12px">
+          <div class="gauge-item">
+            <div class="gauge-label"><span>Delta (USD equiv.)</span><span style="color:var(--green)">+$2.4 M</span></div>
+            <div class="gauge-track"><div class="gauge-fill" style="width:48%;background:var(--green)"></div></div>
+          </div>
+          <div class="gauge-item">
+            <div class="gauge-label"><span>Gamma ($/1% move)</span><span style="color:var(--yellow)">+$125 K</span></div>
+            <div class="gauge-track"><div class="gauge-fill" style="width:25%;background:var(--yellow)"></div></div>
+          </div>
+          <div class="gauge-item">
+            <div class="gauge-label"><span>Vega ($/1% vol)</span><span style="color:var(--purple)">−$80 K</span></div>
+            <div class="gauge-track"><div class="gauge-fill" style="width:16%;background:var(--purple)"></div></div>
+          </div>
+          <div class="gauge-item">
+            <div class="gauge-label"><span>Theta ($/day)</span><span style="color:var(--red)">−$34 K</span></div>
+            <div class="gauge-track"><div class="gauge-fill" style="width:7%;background:var(--red)"></div></div>
+          </div>
+          <div class="gauge-item">
+            <div class="gauge-label"><span>1-Day 99% VaR</span><span style="color:var(--red)">$1.8 M</span></div>
+            <div class="gauge-track"><div class="gauge-fill" style="width:72%;background:linear-gradient(90deg,var(--green),var(--yellow),var(--red))"></div></div>
+          </div>
+          <div class="gauge-item">
+            <div class="gauge-label"><span>Stressed VaR (10-day)</span><span style="color:var(--red)">$8.2 M</span></div>
+            <div class="gauge-track"><div class="gauge-fill" style="width:82%;background:linear-gradient(90deg,var(--green),var(--yellow),var(--red))"></div></div>
+          </div>
+          <div class="gauge-item">
+            <div class="gauge-label"><span>Intraday P&amp;L</span><span style="color:var(--green)">+$342 K</span></div>
+            <div class="gauge-track"><div class="gauge-fill" style="width:34%;background:var(--green)"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Risk methodology -->
+      <div class="card">
+        <h3>🔬 Risk Methodologies</h3>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+          <div style="padding:10px 14px;background:#0f1926;border-radius:8px">
+            <strong style="font-size:.85rem;color:var(--accent)">Value at Risk (VaR)</strong>
+            <p style="font-size:.79rem;color:var(--muted);margin-top:3px">
+              Maximum expected loss at a given confidence level (99%) over a holding period.
+              Methods: Historical simulation · Monte Carlo · Parametric
+            </p>
+          </div>
+          <div style="padding:10px 14px;background:#0f1926;border-radius:8px">
+            <strong style="font-size:.85rem;color:var(--accent)">Expected Shortfall (ES / CVaR)</strong>
+            <p style="font-size:.79rem;color:var(--muted);margin-top:3px">
+              Average loss beyond VaR — required under FRTB / Basel IV.
+              More sensitive to tail risk than standard VaR.
+            </p>
+          </div>
+          <div style="padding:10px 14px;background:#0f1926;border-radius:8px">
+            <strong style="font-size:.85rem;color:var(--accent)">Stress Testing</strong>
+            <p style="font-size:.79rem;color:var(--muted);margin-top:3px">
+              Re-pricing portfolio under historical scenarios (2008, COVID, 2020 oil crash)
+              and hypothetical shocks.
+            </p>
+          </div>
+          <div style="padding:10px 14px;background:#0f1926;border-radius:8px">
+            <strong style="font-size:.85rem;color:var(--accent)">Greeks (Options)</strong>
+            <p style="font-size:.79rem;color:var(--muted);margin-top:3px">
+              Delta, Gamma, Vega, Theta, Rho — first &amp; second order sensitivities
+              computed in real time across all listed and OTC derivatives.
+            </p>
+          </div>
+          <div style="padding:10px 14px;background:#0f1926;border-radius:8px">
+            <strong style="font-size:.85rem;color:var(--accent)">Limit Monitoring</strong>
+            <p style="font-size:.79rem;color:var(--muted);margin-top:3px">
+              Hierarchy of risk limits (desk → book → trader) with automated
+              alerts at 80% utilisation and hard stops at 100%.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 6. CCP Clearing ────────────────────────────────────── -->
+  <section class="slide" id="s6">
+    <div class="slide-title">Central Counterparty Clearing (CCP)</div>
+    <div class="slide-subtitle">The CCP novates each trade, becoming buyer to every seller and seller to every buyer — eliminating bilateral counterparty risk</div>
+
+    <div class="grid grid-2" style="flex:1">
+      <!-- Diagram -->
+      <div class="card" style="justify-content:center;align-items:center">
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;grid-template-rows:1fr auto 1fr;gap:10px;align-items:center;width:100%">
+
+          <div class="ccp-node" style="border-color:var(--green)">🏦 Bank A<br><small style="color:var(--muted)">Clearing Member</small></div>
+          <div style="text-align:center;color:var(--accent);font-size:1.2rem">⟷</div>
+          <div class="ccp-node" style="border-color:var(--green)">🏦 Bank B<br><small style="color:var(--muted)">Clearing Member</small></div>
+
+          <div style="text-align:center;color:var(--accent);font-size:1.2rem">⟷</div>
+          <div class="ccp-hub">
+            🏛️<br>CCP
+            <span style="font-size:.7rem;color:var(--muted);font-weight:400;margin-top:2px">Novation</span>
+          </div>
+          <div style="text-align:center;color:var(--accent);font-size:1.2rem">⟷</div>
+
+          <div class="ccp-node" style="border-color:var(--purple)">📈 Hedge Fund<br><small style="color:var(--muted)">Client</small></div>
+          <div style="text-align:center;color:var(--accent);font-size:1.2rem">⟷</div>
+          <div class="ccp-node" style="border-color:var(--purple)">📉 Fund Mgr<br><small style="color:var(--muted)">Client</small></div>
+        </div>
+      </div>
+
+      <!-- CCP steps -->
+      <div class="card scroll">
+        <h3>🔄 Clearing Lifecycle</h3>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+          <div style="padding:9px 12px;background:#0f1926;border-radius:8px;display:flex;gap:10px;align-items:center">
+            <span style="font-size:1.1rem">1️⃣</span>
+            <div><strong style="font-size:.84rem">Trade Capture</strong>
+            <p style="font-size:.78rem;color:var(--muted)">Trade details submitted to CCP via clearing gateway (FpML / FIX)</p></div>
+          </div>
+          <div style="padding:9px 12px;background:#0f1926;border-radius:8px;display:flex;gap:10px;align-items:center">
+            <span style="font-size:1.1rem">2️⃣</span>
+            <div><strong style="font-size:.84rem">Novation</strong>
+            <p style="font-size:.78rem;color:var(--muted)">Original contract replaced by two contracts — each party now faces the CCP</p></div>
+          </div>
+          <div style="padding:9px 12px;background:#0f1926;border-radius:8px;display:flex;gap:10px;align-items:center">
+            <span style="font-size:1.1rem">3️⃣</span>
+            <div><strong style="font-size:.84rem">Margin Call</strong>
+            <p style="font-size:.78rem;color:var(--muted)">Initial Margin (IM) + Variation Margin (VM) calculated and called within minutes</p></div>
+          </div>
+          <div style="padding:9px 12px;background:#0f1926;border-radius:8px;display:flex;gap:10px;align-items:center">
+            <span style="font-size:1.1rem">4️⃣</span>
+            <div><strong style="font-size:.84rem">Netting</strong>
+            <p style="font-size:.78rem;color:var(--muted)">Offsetting positions across members compressed — reduces gross exposure by up to 90%</p></div>
+          </div>
+          <div style="padding:9px 12px;background:#0f1926;border-radius:8px;display:flex;gap:10px;align-items:center">
+            <span style="font-size:1.1rem">5️⃣</span>
+            <div><strong style="font-size:.84rem">Default Waterfall</strong>
+            <p style="font-size:.78rem;color:var(--muted)">Defaulting member's margin → their default fund contribution → CCP equity → mutualized fund</p></div>
+          </div>
+          <div style="margin-top:8px">
+            <p style="font-size:.78rem;color:var(--muted)">Major CCPs: <span class="tag">CME Clearing</span> <span class="tag">LCH.Clearnet</span> <span class="tag">Eurex Clearing</span> <span class="tag">ICE Clear</span> <span class="tag">JSCC</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 7. Margin ──────────────────────────────────────────── -->
+  <section class="slide" id="s7">
+    <div class="slide-title">Margin &amp; Collateral Management</div>
+    <div class="slide-subtitle">The financial buffers that protect the CCP and system from default losses</div>
+
+    <div class="grid grid-2" style="flex:1">
+      <div class="card">
+        <h3>💰 Margin Types</h3>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+          <div style="padding:12px;background:#0f1926;border-radius:8px;border-left:4px solid var(--accent)">
+            <strong style="font-size:.88rem;color:var(--accent)">Initial Margin (IM)</strong>
+            <p style="font-size:.8rem;color:var(--muted);margin-top:4px">
+              Deposited upfront to cover potential future exposure over the close-out period.
+              Calculated using SPAN, TIMS, or SIMM (for OTC). Typically covers 3–5 days of price moves.
+            </p>
+          </div>
+          <div style="padding:12px;background:#0f1926;border-radius:8px;border-left:4px solid var(--yellow)">
+            <strong style="font-size:.88rem;color:var(--yellow)">Variation Margin (VM)</strong>
+            <p style="font-size:.8rem;color:var(--muted);margin-top:4px">
+              Daily (or intraday) mark-to-market settlement of gains &amp; losses.
+              Loser pays winner each day, preventing loss accumulation.
+            </p>
+          </div>
+          <div style="padding:12px;background:#0f1926;border-radius:8px;border-left:4px solid var(--purple)">
+            <strong style="font-size:.88rem;color:var(--purple)">Default Fund (Guarantee Fund)</strong>
+            <p style="font-size:.8rem;color:var(--muted);margin-top:4px">
+              Mutualized pool contributed by all clearing members. Used only after a defaulting member's
+              IM is exhausted. Calculated via stress scenarios.
+            </p>
+          </div>
+          <div style="padding:12px;background:#0f1926;border-radius:8px;border-left:4px solid var(--green)">
+            <strong style="font-size:.88rem;color:var(--green)">Eligible Collateral</strong>
+            <p style="font-size:.8rem;color:var(--muted);margin-top:4px">
+              Cash (USD, EUR, GBP…), G10 government bonds, agency bonds, equities (with haircuts).
+              Concentrated collateral limits apply.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📐 SPAN Margin Example — Futures</h3>
+        <table style="margin-top:8px">
+          <tr><th>Scenario</th><th>Price Δ</th><th>Vol Δ</th><th>Loss</th></tr>
+          <tr><td>Up 3 · Up</td><td>+3σ</td><td>+vol</td><td style="color:var(--red)">-$12 500</td></tr>
+          <tr><td>Up 3 · Down</td><td>+3σ</td><td>-vol</td><td style="color:var(--red)">-$11 000</td></tr>
+          <tr><td>Up 2 · Up</td><td>+2σ</td><td>+vol</td><td style="color:var(--red)">-$8 200</td></tr>
+          <tr><td>Up 2 · Down</td><td>+2σ</td><td>-vol</td><td style="color:var(--red)">-$7 500</td></tr>
+          <tr><td>Up 1 · Up</td><td>+1σ</td><td>+vol</td><td style="color:var(--yellow)">-$3 800</td></tr>
+          <tr><td>Down 1 · Up</td><td>-1σ</td><td>+vol</td><td style="color:var(--green)">+$1 200</td></tr>
+          <tr><td>Down 2 · Down</td><td>-2σ</td><td>-vol</td><td style="color:var(--green)">+$5 400</td></tr>
+          <tr><td><strong>Worst Case</strong></td><td>-3σ</td><td>+vol</td><td style="color:var(--red)"><strong>-$14 200</strong></td></tr>
+        </table>
+        <p style="margin-top:10px;font-size:.78rem;color:var(--muted)">
+          IM = worst-case loss + inter-commodity credit spreads.
+          Intraday margin calls issued when losses exceed 50% of IM.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 8. Settlement ──────────────────────────────────────── -->
+  <section class="slide" id="s8">
+    <div class="slide-title">Settlement Process</div>
+    <div class="slide-subtitle">Finalising ownership transfer of cash and securities — the last mile of the trade lifecycle</div>
+
+    <div class="grid grid-2" style="flex:1">
+      <!-- Timeline -->
+      <div class="card">
+        <h3>📅 Standard Equity Settlement (T+1)</h3>
+        <div class="timeline" style="margin-top:14px">
+          <div class="tl-item">
+            <div class="tl-dot" style="background:var(--accent)"></div>
+            <div class="tl-day">T — TRADE DATE</div>
+            <div class="tl-title">Order matched &amp; trade confirmed</div>
+            <div class="tl-desc">Trade ID generated · Clearing instruction sent to CCP</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="background:var(--yellow)"></div>
+            <div class="tl-day">T+0 (EOD)</div>
+            <div class="tl-title">Post-trade processing</div>
+            <div class="tl-desc">Trade enrichment · Allocation · Confirmation (SWIFT/DTCC)</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="background:var(--yellow)"></div>
+            <div class="tl-day">T+1 AM</div>
+            <div class="tl-title">Matching &amp; Instruction</div>
+            <div class="tl-desc">Custodians match settlement instructions · SWIFT MT54x series</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="background:var(--green)"></div>
+            <div class="tl-day">T+1 (SETTLEMENT)</div>
+            <div class="tl-title">Delivery versus Payment (DvP)</div>
+            <div class="tl-desc">Securities delivered simultaneously against cash payment in RTGS</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="background:var(--green)"></div>
+            <div class="tl-day">T+1 EOD</div>
+            <div class="tl-title">Reconciliation</div>
+            <div class="tl-desc">CSD confirms positions · Failed trades go to buy-in or penalty</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settlement infra -->
+      <div class="card">
+        <h3>🏗️ Settlement Infrastructure</h3>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+          <div style="padding:10px 14px;background:#0f1926;border-radius:8px">
+            <strong style="font-size:.85rem;color:var(--accent)">Central Securities Depositories (CSDs)</strong>
+            <p style="font-size:.79rem;color:var(--muted);margin-top:3px">
+              Hold legal title to securities in dematerialised form.
+              Examples: DTCC/NSCC (US), Euroclear, Clearstream, JASDEC (JP)
+            </p>
+          </div>
+          <div style="padding:10px 14px;background:#0f1926;border-radius:8px">
+            <strong style="font-size:.85rem;color:var(--accent)">RTGS — Real-Time Gross Settlement</strong>
+            <p style="font-size:.79rem;color:var(--muted);margin-top:3px">
+              Central bank systems (FedWire, TARGET2, CHAPS) settle cash leg
+              in real time, one transaction at a time — no netting, no credit risk.
+            </p>
+          </div>
+          <div style="padding:10px 14px;background:#0f1926;border-radius:8px">
+            <strong style="font-size:.85rem;color:var(--accent)">Delivery versus Payment (DvP)</strong>
+            <p style="font-size:.79rem;color:var(--muted);margin-top:3px">
+              Simultaneous atomic exchange of securities and cash —
+              eliminates principal risk (Herstatt risk).
+            </p>
+          </div>
+          <div style="padding:10px 14px;background:#0f1926;border-radius:8px">
+            <strong style="font-size:.85rem;color:var(--accent)">Securities Financing (Repo / Stock Borrow)</strong>
+            <p style="font-size:.79rem;color:var(--muted);margin-top:3px">
+              Repo &amp; stock-lending markets provide the liquidity to cover settlement fails and
+              short positions. Tri-party agents (BNY, JP Morgan) manage collateral.
+            </p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+            <span class="tag">DTCC</span><span class="tag">Euroclear</span><span class="tag">Clearstream</span>
+            <span class="tag">FedWire</span><span class="tag">TARGET2</span><span class="tag">SWIFT</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 9. Technology ──────────────────────────────────────── -->
+  <section class="slide" id="s9">
+    <div class="slide-title">Technology Stack</div>
+    <div class="slide-subtitle">The systems &amp; protocols that power modern electronic trading</div>
+
+    <div class="grid grid-3" style="flex:1">
+      <div class="card">
+        <div class="card-icon">⚡</div>
+        <h3>Low-Latency Trading</h3>
+        <ul>
+          <li>FPGA order entry gateways</li>
+          <li>Kernel-bypass networking (DPDK / RDMA)</li>
+          <li>Co-location &amp; cross-connect</li>
+          <li>Precision timestamping (PTP/GPS)</li>
+          <li>Lock-free ring buffers</li>
+          <li>LMAX Disruptor pattern</li>
+        </ul>
+        <div class="tech-row" style="margin-top:auto">
+          <span class="tech-chip">C++ / Rust</span>
+          <span class="tech-chip">FPGA</span>
+          <span class="tech-chip">Linux PREEMPT_RT</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">📡</div>
+        <h3>Market Data &amp; Protocols</h3>
+        <ul>
+          <li>FIX Protocol (order routing)</li>
+          <li>OUCH / ITCH (NASDAQ)</li>
+          <li>Multicast market data (UDP)</li>
+          <li>FpML (OTC derivatives)</li>
+          <li>SWIFT (post-trade messages)</li>
+          <li>MDP 3.0 (CME Globex)</li>
+        </ul>
+        <div class="tech-row" style="margin-top:auto">
+          <span class="tech-chip">FIX 4.4/5.0</span>
+          <span class="tech-chip">SBE encoding</span>
+          <span class="tech-chip">Multicast</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">🧮</div>
+        <h3>Risk &amp; Analytics</h3>
+        <ul>
+          <li>Real-time Greeks engine</li>
+          <li>Monte Carlo GPU acceleration</li>
+          <li>In-memory grids (Hazelcast / Ignite)</li>
+          <li>Time-series DBs (kdb+/InfluxDB)</li>
+          <li>ML-driven market surveillance</li>
+          <li>Cloud burst for stress testing</li>
+        </ul>
+        <div class="tech-row" style="margin-top:auto">
+          <span class="tech-chip">kdb+/q</span>
+          <span class="tech-chip">Python / NumPy</span>
+          <span class="tech-chip">GPU / CUDA</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">☁️</div>
+        <h3>Cloud &amp; Infrastructure</h3>
+        <ul>
+          <li>Hybrid cloud (on-prem + AWS/Azure)</li>
+          <li>Kubernetes for risk workloads</li>
+          <li>Event streaming (Kafka)</li>
+          <li>Disaster Recovery &amp; BCP</li>
+          <li>Hardware Security Modules (HSM)</li>
+        </ul>
+        <div class="tech-row" style="margin-top:auto">
+          <span class="tech-chip">Kafka</span>
+          <span class="tech-chip">Kubernetes</span>
+          <span class="tech-chip">Terraform</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">🔐</div>
+        <h3>Regulatory &amp; Compliance Tech</h3>
+        <ul>
+          <li>Trade surveillance (SMARTS, Nasdaq)</li>
+          <li>Transaction reporting (EMIR, MiFIR)</li>
+          <li>LEI &amp; ISIN reference data</li>
+          <li>RegTech APIs (DTCC GTR)</li>
+          <li>Audit trails &amp; log management</li>
+        </ul>
+        <div class="tech-row" style="margin-top:auto">
+          <span class="tech-chip">ISO 20022</span>
+          <span class="tech-chip">GLEIF LEI</span>
+          <span class="tech-chip">SFTR</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">🤖</div>
+        <h3>AI &amp; Next-Gen Trading</h3>
+        <ul>
+          <li>Reinforcement learning for execution</li>
+          <li>NLP sentiment analysis on news</li>
+          <li>Alternative data (satellite, web)</li>
+          <li>Graph neural nets for risk</li>
+          <li>LLM-assisted surveillance</li>
+        </ul>
+        <div class="tech-row" style="margin-top:auto">
+          <span class="tech-chip">PyTorch</span>
+          <span class="tech-chip">Ray</span>
+          <span class="tech-chip">LLM APIs</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 10. Key Takeaways ──────────────────────────────────── -->
+  <section class="slide" id="s10">
+    <div class="slide-title">Key Takeaways</div>
+    <div class="slide-subtitle">What makes modern electronic trading, risk &amp; clearing extraordinary</div>
+
+    <div class="grid grid-2" style="flex:1">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="card" style="flex-direction:row;align-items:center;gap:16px">
+          <span style="font-size:2rem">⚡</span>
+          <div>
+            <h3>Speed &amp; Scale</h3>
+            <p style="font-size:.82rem;color:var(--muted)">
+              Matching engines execute in &lt;1 µs. Global exchanges handle millions of orders per second.
+              Co-location means latency is measured in nanoseconds.
+            </p>
+          </div>
+        </div>
+        <div class="card" style="flex-direction:row;align-items:center;gap:16px">
+          <span style="font-size:2rem">🛡️</span>
+          <div>
+            <h3>Layered Risk Controls</h3>
+            <p style="font-size:.82rem;color:var(--muted)">
+              Pre-trade, intraday, and post-trade risk checks form an overlapping safety net.
+              Circuit breakers, margin, and the CCP waterfall protect the whole system.
+            </p>
+          </div>
+        </div>
+        <div class="card" style="flex-direction:row;align-items:center;gap:16px">
+          <span style="font-size:2rem">🏛️</span>
+          <div>
+            <h3>CCP as Systemic Safeguard</h3>
+            <p style="font-size:.82rem;color:var(--muted)">
+              Central clearing with novation, netting and margin eliminates bilateral credit risk.
+              Post-2008 reforms mandated clearing of most OTC derivatives.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="card" style="flex-direction:row;align-items:center;gap:16px">
+          <span style="font-size:2rem">📐</span>
+          <div>
+            <h3>DvP Eliminates Principal Risk</h3>
+            <p style="font-size:.82rem;color:var(--muted)">
+              Simultaneous exchange of securities and cash in atomic transactions
+              ensures you never pay without receiving — removing settlement failure risk.
+            </p>
+          </div>
+        </div>
+        <div class="card" style="flex-direction:row;align-items:center;gap:16px">
+          <span style="font-size:2rem">📜</span>
+          <div>
+            <h3>Regulatory Complexity</h3>
+            <p style="font-size:.82rem;color:var(--muted)">
+              MiFID II, Dodd-Frank, EMIR, Basel IV — a dense web of global regulation drives
+              transparency, reporting, and capital requirements across the entire chain.
+            </p>
+          </div>
+        </div>
+        <div class="card" style="flex-direction:row;align-items:center;gap:16px">
+          <span style="font-size:2rem">🤖</span>
+          <div>
+            <h3>Technology is the Moat</h3>
+            <p style="font-size:.82rem;color:var(--muted)">
+              Low-latency infrastructure, AI-driven surveillance, and real-time risk engines
+              are critical differentiators — and barriers to entry — in modern markets.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /deck -->
+
+<!-- ── Navigation UI ────────────────────────────────────────── -->
+<div id="dots"></div>
+<div id="nav">
+  <button id="prevBtn" disabled>← Prev</button>
+  <span id="counter">1 / 11</span>
+  <button id="nextBtn">Next →</button>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total   = slides.length;
+  let current   = 0;
+
+  const prevBtn  = document.getElementById('prevBtn');
+  const nextBtn  = document.getElementById('nextBtn');
+  const counter  = document.getElementById('counter');
+  const dotsEl   = document.getElementById('dots');
+
+  // Build dots
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.title = `Slide ${i + 1}`;
+    d.addEventListener('click', () => goTo(i));
+    dotsEl.appendChild(d);
+  });
+
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    dotsEl.children[current].classList.remove('active');
+    current = Math.max(0, Math.min(n, total - 1));
+    slides[current].classList.add('active');
+    dotsEl.children[current].classList.add('active');
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === total - 1;
+    counter.textContent = `${current + 1} / ${total}`;
+  }
+
+  prevBtn.addEventListener('click', () => goTo(current - 1));
+  nextBtn.addEventListener('click', () => goTo(current + 1));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(current + 1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo(current - 1);
+  });
+</script>
+</body>
+</html>
